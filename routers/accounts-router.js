@@ -56,29 +56,27 @@ router.post("/", async (req, res, next) => {
 
 router.put("/:id", async (req, res, next) => {
     try {
-        const payload = {
-            name: req.body.name,
-            budget: req.body.budget,
-        }
+		// be specific with a payload object rather than passing
+		// `req.body` directly to insert, so the user doesn't try to
+		// send data we are auto-generating in the database
+		const payload = {
+			name: req.body.name,
+			budget: req.body.budget,
+		}
 
-        if (!payload.name || !payload.budget) {
-            return res.status(400).json({
-                message: "need an account name and budget"
-            })
-        }
+		if (!payload.name || !payload.budget) {
+			return res.status(400).json({
+				message: "Need a name and budget",
+			})
+		}
 
-        // translates to 'UPDATE accounts SET name = ? AND budget = ? WHERE id = ?;'
-        await db("account").where("id", req.params.id).update(payload)
+		// translates to `UPDATE messages SET name = ? AND budget = ? WHERE id = ?;`
+		await db("accounts").where("id", req.params.id).update(payload)
 
-        const account = await db
-            .first("*") // a shortcut for destructuring the array and limit 1
-            .from("accounts")
-            .where("id", req.params.id)
-
-        res.json(req.body)
-    } catch (err) {
-        next(err)
-    }
+		res.json(await getAccountByID(req.params.id))
+	} catch (err) {
+		next(err)
+	}
 })
 
 router.delete("/:id", async (req, res, next) => {
@@ -93,5 +91,12 @@ router.delete("/:id", async (req, res, next) => {
         next(err)
     }
 })
+
+function getAccountByID(id) {
+	return db
+		.first("*") // a shortcut for destructuring the array and limit 1
+		.from("accounts")
+		.where("id", id)
+}
 
 module.exports = router
