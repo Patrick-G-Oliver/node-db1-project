@@ -55,11 +55,43 @@ router.post("/", async (req, res, next) => {
 })
 
 router.put("/:id", async (req, res, next) => {
-    
+    try {
+        const payload = {
+            name: req.body.name,
+            budget: req.body.budget,
+        }
+
+        if (!payload.name || !payload.budget) {
+            return res.status(400).json({
+                message: "need an account name and budget"
+            })
+        }
+
+        // translates to 'UPDATE accounts SET name = ? AND budget = ? WHERE id = ?;'
+        await db("account").where("id", req.params.id).update(payload)
+
+        const account = await db
+            .first("*") // a shortcut for destructuring the array and limit 1
+            .from("accounts")
+            .where("id", req.params.id)
+
+        res.json(req.body)
+    } catch (err) {
+        next(err)
+    }
 })
 
 router.delete("/:id", async (req, res, next) => {
-    
+    try {
+        // tranlates to 'DELETE FROM accounts WHERE id = ?;'
+        await db("accounts").where("id", req.params.id).del()
+
+        // there is no longer a resource to return, but it was deleted successfully 
+        // (204 means success but empty response)
+        res.status(204).end()
+    } catch (err) {
+        next(err)
+    }
 })
 
 module.exports = router
